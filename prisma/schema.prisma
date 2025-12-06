@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  jobs      Job[]
+  createdAt DateTime @default(now())
+}
+
+model Job {
+  id         Int      @id @default(autoincrement())
+  clientId   Int
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name       String
+  targetUrls String[] // Array of URLs to process
+  runs       JobRun[]
+  createdAt  DateTime @default(now())
+}
+
+model JobRun {
+  id              Int         @id @default(autoincrement())
+  jobId           Int
+  job             Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status          String      // PENDING, RUNNING, SUCCESS, FAILED
+  totalUsageUnits Int         @default(0)
+  clientCharge    Float       @default(0)
+  partnerPayout   Float       @default(0)
+  platformShare   Float       @default(0)
+  urlResults      UrlResult[]
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+}
+
+model UrlResult {
+  id          Int     @id @default(autoincrement())
+  jobRunId    Int
+  jobRun      JobRun  @relation(fields: [jobRunId], references: [id], onDelete: Cascade)
+  url         String
+  usageUnits  Int
+  result      Float?  // Optional fake price or result
+}
